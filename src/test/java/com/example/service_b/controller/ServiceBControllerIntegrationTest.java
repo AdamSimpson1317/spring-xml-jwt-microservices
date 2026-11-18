@@ -6,6 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -34,10 +35,12 @@ class ServiceBControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/xml")
-                    .contentType("application/xml")
-                    .content(xml))
+                        .contentType("application/xml")
+                        .content(xml))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Received: Hello Service B"));
+                .andExpect(content().contentTypeCompatibleWith("application/xml"))
+                .andExpect(content().string(
+                        containsString("<content>Processed: Hello Service B</content")));
     }
 
     @Test
@@ -65,5 +68,26 @@ class ServiceBControllerIntegrationTest {
                         .contentType("application/xml")
                         .content(xml))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnMarshalledXmlResponse() throws Exception {
+
+        String xml = """
+            <message>
+                <content>Hello Service B</content>
+            </message>
+            """;
+
+        mockMvc.perform(post("/api/xml")
+                        .contentType("application/xml")
+                        .content(xml))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/xml"))
+                .andExpect(content().string(
+                        containsString(
+                                "<content>Processed: Hello Service B</content>"
+                        )
+                ));
     }
 }

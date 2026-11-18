@@ -1,6 +1,7 @@
 package com.example.service_b.controller;
 
 import com.example.service_b.model.Message;
+import com.example.service_b.service.XmlMarshallingService;
 import com.example.service_b.service.XmlUnmarshallingService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,9 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ServiceBController {
 
     private final XmlUnmarshallingService xmlUnmarshallingService;
+    private final XmlMarshallingService xmlMarshallingService;
 
-    public ServiceBController(XmlUnmarshallingService xmlUnmarshallingService) {
+    public ServiceBController(XmlUnmarshallingService xmlUnmarshallingService, XmlMarshallingService xmlMarshallingService) {
         this.xmlUnmarshallingService = xmlUnmarshallingService;
+        this.xmlMarshallingService = xmlMarshallingService;
     }
 
     @RequestMapping("/status")
@@ -24,11 +27,14 @@ public class ServiceBController {
 
     @PostMapping(
             value = "/xml",
-            consumes = "application/xml"
+            consumes = "application/xml",
+            produces = "application/xml"
     )
     public String receiveXml(@RequestBody String xml){
         Message message = xmlUnmarshallingService.unmarshal(xml);
 
-        return "Received: " + message.getContent();
+        message.setContent("Processed: " + message.getContent());
+
+        return xmlMarshallingService.marshal(message);
     }
 }

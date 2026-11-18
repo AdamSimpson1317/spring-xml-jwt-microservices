@@ -1,5 +1,6 @@
 package com.example.service_b.controller;
 
+import com.example.service_b.service.XmlMarshallingService;
 import com.example.service_b.service.XmlUnmarshallingService;
 import org.junit.jupiter.api.Test;
 
@@ -9,8 +10,9 @@ public class ServiceBControllerTest {
 
     @Test
     void shouldReturnServiceBStatus(){
-        XmlUnmarshallingService service = new XmlUnmarshallingService();
-        ServiceBController controller = new ServiceBController(service);
+        XmlUnmarshallingService unmarshallingService = new XmlUnmarshallingService();
+        XmlMarshallingService marshallingService = new XmlMarshallingService();
+        ServiceBController controller = new ServiceBController(unmarshallingService, marshallingService);
 
         String response = controller.getStatus();
 
