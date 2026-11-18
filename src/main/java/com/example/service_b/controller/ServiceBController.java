@@ -2,7 +2,6 @@ package com.example.service_b.controller;
 
 import com.example.service_b.model.Message;
 import com.example.service_b.service.XmlUnmarshallingService;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

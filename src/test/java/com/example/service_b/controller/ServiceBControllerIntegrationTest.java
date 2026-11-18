@@ -39,4 +39,31 @@ class ServiceBControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("Received: Hello Service B"));
     }
+
+    @Test
+    void shouldReturnBadRequestForMalformedXml() throws Exception {
+
+        String invalidXml = """
+            <message>
+                <content>Hello Service B</content>
+            """;
+
+        mockMvc.perform(post("/api/xml")
+                        .contentType("application/xml")
+                        .content(invalidXml))
+                .andExpect(status().isBadRequest());
+    }
+    @Test
+    void shouldReturnBadRequestWhenContentIsMissing() throws Exception {
+
+        String xml = """
+            <message>
+            <message>
+            """;
+
+        mockMvc.perform(post("/api/xml")
+                        .contentType("application/xml")
+                        .content(xml))
+                .andExpect(status().isBadRequest());
+    }
 }

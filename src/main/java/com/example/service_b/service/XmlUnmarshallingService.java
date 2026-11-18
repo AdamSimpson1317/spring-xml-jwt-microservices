@@ -1,5 +1,7 @@
 package com.example.service_b.service;
 
+import com.example.service_b.exception.InvalidMessageException;
+import com.example.service_b.exception.MalformedXmlException;
 import com.example.service_b.model.Message;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
@@ -18,10 +20,16 @@ public class XmlUnmarshallingService {
 
             Unmarshaller unmarshaller = context.createUnmarshaller();
 
-            return (Message) unmarshaller.unmarshal(new StringReader(xml));
+            Message message = (Message) unmarshaller.unmarshal(new StringReader(xml));
+
+            if(message.getContent() == null || message.getContent().isBlank()){
+                throw new InvalidMessageException("Message content is required");
+            }
+
+            return message;
 
         } catch (JAXBException exception){
-            throw new RuntimeException("Failed to unmarshal XML", exception);
+            throw new MalformedXmlException("Failed to unmarshal XML", exception);
         }
     }
 }
