@@ -3,10 +3,9 @@ package com.example.service_b.controller;
 import com.example.service_b.model.Message;
 import com.example.service_b.service.XmlMarshallingService;
 import com.example.service_b.service.XmlUnmarshallingService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
@@ -30,11 +29,17 @@ public class ServiceBController {
             consumes = "application/xml",
             produces = "application/xml"
     )
-    public String receiveXml(@RequestBody String xml){
+    public ResponseEntity<String> receiveXml(
+            @RequestBody String xml, @RequestHeader("X-Correlation-ID") String correlationId){
         Message message = xmlUnmarshallingService.unmarshal(xml);
 
         message.setContent("Processed: " + message.getContent());
 
-        return xmlMarshallingService.marshal(message);
+        String responseXml = xmlMarshallingService.marshal(message);
+
+        return ResponseEntity.ok()
+                .header("X-Correlation-Id", correlationId)
+                .contentType(MediaType.APPLICATION_XML)
+                .body(responseXml);
     }
 }

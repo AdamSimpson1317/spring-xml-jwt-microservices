@@ -9,8 +9,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -36,7 +35,8 @@ class ServiceBControllerIntegrationTest {
 
         mockMvc.perform(post("/api/xml")
                         .contentType("application/xml")
-                        .content(xml))
+                        .header("X-Correlation-ID", "test-correlation-123").
+                        content(xml))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("application/xml"))
                 .andExpect(content().string(
@@ -53,6 +53,7 @@ class ServiceBControllerIntegrationTest {
 
         mockMvc.perform(post("/api/xml")
                         .contentType("application/xml")
+                        .header("X-Correlation-ID", "test-correlation-123")
                         .content(invalidXml))
                 .andExpect(status().isBadRequest());
     }
@@ -81,6 +82,7 @@ class ServiceBControllerIntegrationTest {
 
         mockMvc.perform(post("/api/xml")
                         .contentType("application/xml")
+                        .header("X-Correlation-ID", "test-correlation-123")
                         .content(xml))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("application/xml"))
@@ -88,6 +90,28 @@ class ServiceBControllerIntegrationTest {
                         containsString(
                                 "<content>Processed: Hello Service B</content>"
                         )
+                ));
+    }
+
+    @Test
+    void shouldReturnCorrelationIdInResponse() throws Exception {
+
+        String xml = """
+            <message>
+                <content>Hello Service B</content>
+            </message>
+            """;
+
+        String correlationId = "test-correlation-123";
+
+        mockMvc.perform(post("/api/xml")
+                        .contentType("application/xml")
+                        .header("X-Correlation-ID", correlationId)
+                        .content(xml))
+                .andExpect(status().isOk())
+                .andExpect(header().string(
+                        "X-Correlation-ID",
+                        correlationId
                 ));
     }
 }

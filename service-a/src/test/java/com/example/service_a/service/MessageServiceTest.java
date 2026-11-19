@@ -1,13 +1,10 @@
-package com.example.service_a.message;
+package com.example.service_a.service;
 
 import com.example.service_a.client.ServiceBClient;
 import com.example.service_a.model.Message;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.example.service_a.service.MessageService;
-import com.example.service_a.service.XmlMarshallingService;
-import com.example.service_a.service.XmlUnmarshallingService;
 import org.junit.jupiter.api.Test;
 
 class MessageServiceTest {
@@ -24,10 +21,14 @@ class MessageServiceTest {
         ServiceBClient serviceBClient =
                 new ServiceBClient("http://localhost:8081");
 
+        CorrelationIdService correlationIdService =
+                new CorrelationIdService();
+
         MessageService messageService = new MessageService(
                 marshallingService,
                 unmarshallingService,
-                serviceBClient
+                serviceBClient,
+                correlationIdService
         );
 
         Message message = new Message();

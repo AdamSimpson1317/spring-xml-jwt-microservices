@@ -31,12 +31,58 @@ public class ServiceBClientTest {
             </message>
             """;
 
-        String response = client.sendXml(xml);
+        String response = client.sendXml(xml, "test-correlation-123");
 
         assertTrue(
                 response.contains(
                         "<content>Processed: Hello Service B</content>"
                 )
+        );
+    }
+
+    @Test
+    void shouldSendXmlWithCorrelationIdToServiceB() {
+
+        ServiceBClient client =
+                new ServiceBClient("http://localhost:8081");
+
+        String xml = """
+            <message>
+                <content>Hello Service B</content>
+            </message>
+            """;
+
+        String correlationId = "test-correlation-123";
+
+        String response = client.sendXml(xml, correlationId);
+
+        assertTrue(
+                response.contains(
+                        "<content>Processed: Hello Service B</content>"
+                )
+        );
+    }
+
+    @Test
+    void shouldReturnCorrelationIdFromServiceB() {
+
+        ServiceBClient client =
+                new ServiceBClient("http://localhost:8081");
+
+        String xml = """
+            <message>
+                <content>Hello Service B</content>
+            </message>
+            """;
+
+        String correlationId = "test-correlation-123";
+
+        ServiceBResponse response =
+                client.sendXmlWithResponse(xml, correlationId);
+
+        assertEquals(
+                correlationId,
+                response.correlationId()
         );
     }
 }
