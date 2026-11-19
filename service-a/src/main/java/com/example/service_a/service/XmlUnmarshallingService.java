@@ -6,9 +6,11 @@ import com.example.service_a.model.Message;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
+import org.springframework.stereotype.Service;
 
 import java.io.StringReader;
 
+@Service
 public class XmlUnmarshallingService {
 
     public Message unmarshal(String xml){

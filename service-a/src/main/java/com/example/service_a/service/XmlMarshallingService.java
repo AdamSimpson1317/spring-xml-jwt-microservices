@@ -5,9 +5,11 @@ import com.example.service_a.model.Message;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
+import org.springframework.stereotype.Service;
 
 import java.io.StringWriter;
 
+@Service
 public class XmlMarshallingService {
 
     public String marshal(Message message){
