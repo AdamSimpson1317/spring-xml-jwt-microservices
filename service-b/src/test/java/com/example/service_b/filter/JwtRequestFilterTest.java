@@ -13,7 +13,7 @@ class JwtRequestFilterTest {
 
         String secret = "this-is-a-development-secret-key-12345";
 
-        JwtService jwtService = new JwtService(secret);
+        JwtService jwtService = new JwtService(secret, 3600000);
 
         JwtRequestFilter filter = new JwtRequestFilter(jwtService);
 
@@ -28,7 +28,7 @@ class JwtRequestFilterTest {
 
         String secret = "this-is-a-development-secret-key-12345";
 
-        JwtService jwtService = new JwtService(secret);
+        JwtService jwtService = new JwtService(secret, 3600000);
 
         JwtRequestFilter filter = new JwtRequestFilter(jwtService);
 
@@ -46,7 +46,7 @@ class JwtRequestFilterTest {
 
         String secret = "this-is-a-development-secret-key-12345";
 
-        JwtService jwtService = new JwtService(secret);
+        JwtService jwtService = new JwtService(secret, 3600000);
         JwtRequestFilter filter = new JwtRequestFilter(jwtService);
 
         String token = jwtService.generateToken();
@@ -61,7 +61,7 @@ class JwtRequestFilterTest {
 
         String secret = "this-is-a-development-secret-key-12345";
 
-        JwtService jwtService = new JwtService(secret);
+        JwtService jwtService = new JwtService(secret, 3600000);
         JwtRequestFilter filter = new JwtRequestFilter(jwtService);
 
         String invalidToken = "invalid.jwt.token";

@@ -158,7 +158,7 @@ class ServiceBControllerIntegrationTest {
     void shouldProcessRequestWithValidJwt() throws Exception {
 
         JwtService jwtService =
-                new JwtService("this-is-a-development-secret-key-12345");
+                new JwtService("this-is-a-development-secret-key-12345",3600000);
 
         String token = jwtService.generateToken();
 
@@ -198,6 +198,28 @@ class ServiceBControllerIntegrationTest {
                         .contentType("application/xml")
                         .header("X-Correlation-ID", "test-correlation-123")
                         .header("Authorization", "Bearer invalid.jwt.token")
+                        .content(xml))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldRejectRequestWithExpiredJwt() throws Exception {
+
+        JwtService jwtService =
+                new JwtService("this-is-a-development-secret-key-12345", 3600000);
+
+        String expiredToken = jwtService.generateExpiredToken();
+
+        String xml = """
+            <message>
+                <content>Hello Service B</content>
+            </message>
+            """;
+
+        mockMvc.perform(post("/api/xml")
+                        .contentType("application/xml")
+                        .header("X-Correlation-ID", "test-correlation-123")
+                        .header("Authorization", "Bearer " + expiredToken)
                         .content(xml))
                 .andExpect(status().isUnauthorized());
     }
