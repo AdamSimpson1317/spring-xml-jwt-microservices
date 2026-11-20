@@ -71,4 +71,20 @@ class JwtRequestFilterTest {
                 () -> filter.validateToken(invalidToken)
         );
     }
+
+    @Test
+    void shouldGenerateTokenWhenAuthorizationHeaderIsBlank() {
+
+        JwtService jwtService = new JwtService(
+                "this-is-a-development-secret-key-12345",
+                3600000
+        );
+
+        JwtRequestFilter filter = new JwtRequestFilter(jwtService);
+
+        String token = filter.getOrGenerateToken("");
+
+        assertNotNull(token);
+        assertFalse(token.isBlank());
+    }
 }

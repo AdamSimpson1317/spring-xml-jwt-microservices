@@ -223,4 +223,28 @@ class ServiceBControllerIntegrationTest {
                         .content(xml))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void shouldRejectRequestWithWrongSignature() throws Exception {
+
+        JwtService differentJwtService = new JwtService(
+                "this-is-a-different-secret-key-67890",
+                3600000
+        );
+
+        String token = differentJwtService.generateToken();
+
+        String xml = """
+            <message>
+                <content>Hello Service B</content>
+            </message>
+            """;
+
+        mockMvc.perform(post("/api/xml")
+                        .contentType("application/xml")
+                        .header("X-Correlation-ID", "test-correlation-123")
+                        .header("Authorization", "Bearer " + token)
+                        .content(xml))
+                .andExpect(status().isUnauthorized());
+    }
 }
