@@ -2,8 +2,7 @@ package com.example.service_a.client;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ServiceBClientTest {
 
@@ -83,6 +82,63 @@ public class ServiceBClientTest {
         assertEquals(
                 correlationId,
                 response.correlationId()
+        );
+    }
+
+    @Test
+    void shouldCaptureJwtGeneratedByServiceB() {
+
+        ServiceBClient client =
+                new ServiceBClient("http://localhost:8081");
+
+        String xml = """
+            <message>
+                <content>Hello Service B</content>
+            </message>
+            """;
+
+        ServiceBResponse response =
+                client.sendXmlWithResponse(
+                        xml,
+                        "test-correlation-123"
+                );
+
+        assertNotNull(response.jwt());
+        assertFalse(response.jwt().isBlank());
+    }
+
+    @Test
+    void shouldSendCapturedJwtBackToServiceB() {
+
+        ServiceBClient client =
+                new ServiceBClient("http://localhost:8081");
+
+        String xml = """
+            <message>
+                <content>Hello Service B</content>
+            </message>
+            """;
+
+        String correlationId = "test-correlation-123";
+
+        ServiceBResponse firstResponse =
+                client.sendXmlWithResponse(xml, correlationId);
+
+        String jwt = firstResponse.jwt();
+
+        ServiceBResponse secondResponse =
+                client.sendXmlWithResponse(
+                        xml,
+                        correlationId,
+                        jwt
+                );
+
+        assertEquals(jwt, secondResponse.jwt());
+
+        assertTrue(
+                secondResponse.body().contains(
+                        "<content>Processed: Hello Service B</content>"
+                )
         );
     }
 }

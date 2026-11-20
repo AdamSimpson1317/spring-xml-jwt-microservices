@@ -53,14 +53,30 @@ public class ServiceBClient {
             String xml,
             String correlationId) {
 
+        return sendXmlWithResponse(xml, correlationId, null);
+    }
+
+    public ServiceBResponse sendXmlWithResponse(
+            String xml,
+            String correlationId,
+            String jwt) {
+
         HttpClient httpClient = HttpClient.newHttpClient();
 
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(getXmlEndpoint()))
                 .header("Content-Type", "application/xml")
                 .header("X-Correlation-ID", correlationId)
-                .POST(HttpRequest.BodyPublishers.ofString(xml))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofString(xml));
+
+        if (jwt != null && !jwt.isBlank()) {
+            requestBuilder.header(
+                    "Authorization",
+                    "Bearer " + jwt
+            );
+        }
+
+        HttpRequest request = requestBuilder.build();
 
         try {
             HttpResponse<String> response = httpClient.send(
@@ -72,9 +88,21 @@ public class ServiceBClient {
                     .firstValue("X-Correlation-ID")
                     .orElse(null);
 
+            String authorizationHeader = response.headers()
+                    .firstValue("Authorization")
+                    .orElse(null);
+
+            String returnedJwt = null;
+
+            if (authorizationHeader != null
+                    && authorizationHeader.startsWith("Bearer ")) {
+                returnedJwt = authorizationHeader.substring(7);
+            }
+
             return new ServiceBResponse(
                     response.body(),
-                    returnedCorrelationId
+                    returnedCorrelationId,
+                    returnedJwt
             );
 
         } catch (IOException | InterruptedException exception) {
