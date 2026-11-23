@@ -1,5 +1,6 @@
 package com.example.service_a.client;
 
+import com.example.service_a.config.HttpClientConfig;
 import com.example.service_a.config.RetryConfig;
 import com.example.service_a.exception.RetryExhaustedException;
 import com.example.service_a.exception.ServiceBClientException;
@@ -26,7 +27,8 @@ public class ServiceBClientTest {
         ServiceBClient client =
                 new ServiceBClient("http://localhost:8081",
                         retryService,
-                        HttpClient.newHttpClient()
+                        HttpClient.newHttpClient(),
+                        5000
                 );
 
         assertEquals(
@@ -44,7 +46,8 @@ public class ServiceBClientTest {
         ServiceBClient client =
                 new ServiceBClient("http://localhost:8081",
                         retryService,
-                        HttpClient.newHttpClient()
+                        HttpClient.newHttpClient(),
+                        5000
                 );
 
         String xml = """
@@ -71,7 +74,8 @@ public class ServiceBClientTest {
         ServiceBClient client =
                 new ServiceBClient("http://localhost:8081",
                         retryService,
-                        HttpClient.newHttpClient()
+                        HttpClient.newHttpClient(),
+                        5000
                 );
 
         String xml = """
@@ -100,7 +104,8 @@ public class ServiceBClientTest {
         ServiceBClient client =
                 new ServiceBClient("http://localhost:8081",
                         retryService,
-                        HttpClient.newHttpClient()
+                        HttpClient.newHttpClient(),
+                        5000
                 );
 
         String xml = """
@@ -129,7 +134,8 @@ public class ServiceBClientTest {
         ServiceBClient client =
                 new ServiceBClient("http://localhost:8081",
                         retryService,
-                        HttpClient.newHttpClient()
+                        HttpClient.newHttpClient(),
+                        5000
                 );
 
         String xml = """
@@ -157,7 +163,8 @@ public class ServiceBClientTest {
         ServiceBClient client =
                 new ServiceBClient("http://localhost:8081",
                         retryService,
-                        HttpClient.newHttpClient()
+                        HttpClient.newHttpClient(),
+                        5000
                 );
 
         String xml = """
@@ -198,7 +205,8 @@ public class ServiceBClientTest {
         ServiceBClient client =
                 new ServiceBClient("http://localhost:9999",
                         retryService,
-                        HttpClient.newHttpClient()
+                        HttpClient.newHttpClient(),
+                        5000
                 );
 
         String xml = """
@@ -225,7 +233,8 @@ public class ServiceBClientTest {
         ServiceBClient client =
                 new ServiceBClient("http://localhost:9999",
                         retryService,
-                        HttpClient.newHttpClient()
+                        HttpClient.newHttpClient(),
+                        5000
                 );
 
         String xml = """
@@ -252,7 +261,8 @@ public class ServiceBClientTest {
         ServiceBClient client = new ServiceBClient(
                 "http://localhost:8081",
                 retryService,
-                HttpClient.newHttpClient()
+                HttpClient.newHttpClient(),
+                5000
         );
 
         assertNotNull(client);
@@ -269,7 +279,8 @@ public class ServiceBClientTest {
         ServiceBClient client = new ServiceBClient(
                 "http://localhost:8081",
                 retryService,
-                httpClient
+                httpClient,
+                5000
         );
 
         assertNotNull(client);
@@ -332,7 +343,8 @@ public class ServiceBClientTest {
                     new ServiceBClient(
                             "http://localhost:" + port,
                             retryService,
-                            HttpClient.newHttpClient()
+                            HttpClient.newHttpClient(),
+                            5000
                     );
 
             String xml = """
@@ -429,7 +441,8 @@ public class ServiceBClientTest {
             ServiceBClient client = new ServiceBClient(
                     "http://localhost:" + port,
                     retryService,
-                    HttpClient.newHttpClient()
+                    HttpClient.newHttpClient(),
+                    5000
             );
 
             String xml = """
@@ -497,7 +510,8 @@ public class ServiceBClientTest {
             ServiceBClient client = new ServiceBClient(
                     "http://localhost:" + port,
                     retryService,
-                    HttpClient.newHttpClient()
+                    HttpClient.newHttpClient(),
+                    5000
             );
 
             String xml = """
@@ -548,7 +562,8 @@ public class ServiceBClientTest {
             ServiceBClient client = new ServiceBClient(
                     "http://localhost:" + port,
                     retryService,
-                    HttpClient.newHttpClient()
+                    HttpClient.newHttpClient(),
+                    5000
             );
 
             String xml = """
@@ -566,6 +581,73 @@ public class ServiceBClientTest {
             );
 
             assertEquals(1, attempts.get());
+
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void shouldRetryWhenServiceBRequestTimesOut() throws Exception {
+
+        AtomicInteger attempts = new AtomicInteger();
+
+        HttpServer server = HttpServer.create(
+                new InetSocketAddress(0),
+                0
+        );
+
+        server.setExecutor(
+                java.util.concurrent.Executors.newCachedThreadPool()
+        );
+
+        server.createContext("/api/xml", exchange -> {
+
+            attempts.incrementAndGet();
+
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+            }
+
+            exchange.sendResponseHeaders(200, -1);
+            exchange.close();
+        });
+
+        server.start();
+
+        try {
+            int port = server.getAddress().getPort();
+
+            RetryService retryService =
+                    new RetryService(new RetryConfig(3, 0));
+
+            HttpClientConfig httpClientConfig =
+                    new HttpClientConfig(1000, 50);
+
+            ServiceBClient client = new ServiceBClient(
+                    "http://localhost:" + port,
+                    retryService,
+                    httpClientConfig.httpClient(),
+                    50
+            );
+
+            String xml = """
+                <message>
+                    <content>Hello Service B</content>
+                </message>
+                """;
+
+            assertThrows(
+                    RetryExhaustedException.class,
+                    () -> client.sendXml(
+                            xml,
+                            "test-correlation-123"
+                    )
+            );
+
+            assertEquals(3, attempts.get());
 
         } finally {
             server.stop(0);

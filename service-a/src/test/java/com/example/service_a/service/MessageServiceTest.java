@@ -27,7 +27,8 @@ class MessageServiceTest {
         ServiceBClient serviceBClient =
                 new ServiceBClient("http://localhost:8081",
                         retryService,
-                        HttpClient.newHttpClient()
+                        HttpClient.newHttpClient(),
+                        5000
                 );
 
         CorrelationIdService correlationIdService =

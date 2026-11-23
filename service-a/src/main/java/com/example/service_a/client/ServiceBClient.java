@@ -11,6 +11,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 
 @Component
 public class ServiceBClient {
@@ -18,11 +19,15 @@ public class ServiceBClient {
     private final String serviceBUrl;
     private final RetryService retryService;
     private final HttpClient httpClient;
+    private final long requestTimeoutMs;
 
-    public ServiceBClient(@Value("${service-b.url}") String serviceBUrl, RetryService retryService, HttpClient httpClient) {
+    public ServiceBClient(@Value("${service-b.url}") String serviceBUrl,
+                          RetryService retryService, HttpClient httpClient,
+                          @Value("${service-b.http.request-timeout-ms}") long requestTimeoutMs) {
         this.serviceBUrl = serviceBUrl;
         this.retryService = retryService;
         this.httpClient = httpClient;
+        this.requestTimeoutMs = requestTimeoutMs;
     }
 
     public String getXmlEndpoint(){
@@ -33,6 +38,7 @@ public class ServiceBClient {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(getXmlEndpoint()))
+                .timeout(Duration.ofMillis(requestTimeoutMs))
                 .header("Content-Type", "application/xml")
                 .header("X-Correlation-ID", correlationId)
                 .POST(HttpRequest.BodyPublishers.ofString(xml))
@@ -93,6 +99,7 @@ public class ServiceBClient {
 
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(getXmlEndpoint()))
+                .timeout(Duration.ofMillis(requestTimeoutMs))
                 .header("Content-Type", "application/xml")
                 .header("X-Correlation-ID", correlationId)
                 .POST(HttpRequest.BodyPublishers.ofString(xml));

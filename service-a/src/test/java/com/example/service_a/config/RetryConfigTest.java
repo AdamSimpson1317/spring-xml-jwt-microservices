@@ -1,6 +1,5 @@
-package com.example.service_a.service;
+package com.example.service_a.config;
 
-import com.example.service_a.config.RetryConfig;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
