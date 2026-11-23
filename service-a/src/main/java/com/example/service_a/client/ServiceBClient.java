@@ -1,5 +1,8 @@
 package com.example.service_a.client;
 
+import com.example.service_a.exception.RetryableServiceBException;
+import com.example.service_a.exception.ServiceBClientException;
+import com.example.service_a.service.RetryService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -13,9 +16,13 @@ import java.net.http.HttpResponse;
 public class ServiceBClient {
 
     private final String serviceBUrl;
+    private final RetryService retryService;
+    private final HttpClient httpClient;
 
-    public ServiceBClient(@Value("${service-b.url}") String serviceBUrl) {
+    public ServiceBClient(@Value("${service-b.url}") String serviceBUrl, RetryService retryService, HttpClient httpClient) {
         this.serviceBUrl = serviceBUrl;
+        this.retryService = retryService;
+        this.httpClient = httpClient;
     }
 
     public String getXmlEndpoint(){
@@ -24,8 +31,6 @@ public class ServiceBClient {
 
     public String sendXml(String xml, String correlationId) {
 
-        HttpClient httpClient = HttpClient.newHttpClient();
-
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(getXmlEndpoint()))
                 .header("Content-Type", "application/xml")
@@ -33,20 +38,45 @@ public class ServiceBClient {
                 .POST(HttpRequest.BodyPublishers.ofString(xml))
                 .build();
 
-        try {
-            HttpResponse<String> response = httpClient.send(
-                    request,
-                    HttpResponse.BodyHandlers.ofString()
-            );
+        return retryService.execute(() -> {
 
-            return response.body();
+            try {
+                HttpResponse<String> response = httpClient.send(
+                        request,
+                        HttpResponse.BodyHandlers.ofString()
+                );
 
-        } catch (IOException | InterruptedException exception) {
-            throw new RuntimeException(
-                    "Failed to communicate with Service B",
-                    exception
-            );
-        }
+                if (response.statusCode() >= 500) {
+                    throw new RetryableServiceBException(
+                            "Service B returned HTTP " + response.statusCode()
+                    );
+                }
+
+                if (response.statusCode() >= 400) {
+                    throw new ServiceBClientException(
+                            "Service B returned HTTP " + response.statusCode()
+                    );
+                }
+
+                return response.body();
+
+            } catch (IOException exception) {
+
+                throw new RetryableServiceBException(
+                        "Failed to communicate with Service B",
+                        exception
+                );
+
+            } catch (InterruptedException exception) {
+
+                Thread.currentThread().interrupt();
+
+                throw new RuntimeException(
+                        "Communication with Service B was interrupted",
+                        exception
+                );
+            }
+        });
     }
 
     public ServiceBResponse sendXmlWithResponse(
@@ -60,8 +90,6 @@ public class ServiceBClient {
             String xml,
             String correlationId,
             String jwt) {
-
-        HttpClient httpClient = HttpClient.newHttpClient();
 
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(getXmlEndpoint()))
@@ -78,38 +106,59 @@ public class ServiceBClient {
 
         HttpRequest request = requestBuilder.build();
 
-        try {
-            HttpResponse<String> response = httpClient.send(
-                    request,
-                    HttpResponse.BodyHandlers.ofString()
-            );
+        return retryService.execute(() -> {
 
-            String returnedCorrelationId = response.headers()
-                    .firstValue("X-Correlation-ID")
-                    .orElse(null);
+            try {
+                HttpResponse<String> response = httpClient.send(
+                        request,
+                        HttpResponse.BodyHandlers.ofString()
+                );
 
-            String authorizationHeader = response.headers()
-                    .firstValue("Authorization")
-                    .orElse(null);
+                if (response.statusCode() >= 500) {
+                    throw new RetryableServiceBException(
+                            "Service B returned HTTP "
+                                    + response.statusCode()
+                    );
+                }
 
-            String returnedJwt = null;
+                String returnedCorrelationId = response.headers()
+                        .firstValue("X-Correlation-ID")
+                        .orElse(null);
 
-            if (authorizationHeader != null
-                    && authorizationHeader.startsWith("Bearer ")) {
-                returnedJwt = authorizationHeader.substring(7);
+                String authorizationHeader = response.headers()
+                        .firstValue("Authorization")
+                        .orElse(null);
+
+                String returnedJwt = null;
+
+                if (authorizationHeader != null
+                        && authorizationHeader.startsWith("Bearer ")) {
+
+                    returnedJwt = authorizationHeader.substring(7);
+                }
+
+                return new ServiceBResponse(
+                        response.body(),
+                        returnedCorrelationId,
+                        returnedJwt
+                );
+
+            } catch (IOException exception) {
+
+                throw new RetryableServiceBException(
+                        "Failed to communicate with Service B",
+                        exception
+                );
+
+            } catch (InterruptedException exception) {
+
+                Thread.currentThread().interrupt();
+
+                throw new RuntimeException(
+                        "Communication with Service B was interrupted",
+                        exception
+                );
             }
-
-            return new ServiceBResponse(
-                    response.body(),
-                    returnedCorrelationId,
-                    returnedJwt
-            );
-
-        } catch (IOException | InterruptedException exception) {
-            throw new RuntimeException(
-                    "Failed to communicate with Service B",
-                    exception
-            );
-        }
+        });
     }
 }
