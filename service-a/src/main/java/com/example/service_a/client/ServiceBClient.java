@@ -36,13 +36,58 @@ public class ServiceBClient {
 
     public String sendXml(String xml, String correlationId) {
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(getXmlEndpoint()))
-                .timeout(Duration.ofMillis(requestTimeoutMs))
-                .header("Content-Type", "application/xml")
-                .header("X-Correlation-ID", correlationId)
-                .POST(HttpRequest.BodyPublishers.ofString(xml))
-                .build();
+        HttpRequest request = buildRequest(xml, correlationId, null);
+
+
+        return executeRequest(request).body();
+    }
+
+    public ServiceBResponse sendXmlWithResponse(
+            String xml,
+            String correlationId) {
+
+        return sendXmlWithResponse(xml, correlationId, null);
+    }
+
+    public ServiceBResponse sendXmlWithResponse(
+            String xml,
+            String correlationId,
+            String jwt) {
+
+        HttpRequest request =
+                buildRequest(
+                        xml,
+                        correlationId,
+                        jwt
+                );
+
+        HttpResponse<String> response =
+                executeRequest(request);
+
+        String returnedCorrelationId = response.headers()
+                .firstValue("X-Correlation-ID")
+                .orElse(null);
+
+        String authorizationHeader = response.headers()
+                .firstValue("Authorization")
+                .orElse(null);
+
+        String returnedJwt = null;
+
+        if (authorizationHeader != null
+                && authorizationHeader.startsWith("Bearer ")) {
+
+            returnedJwt = authorizationHeader.substring(7);
+        }
+
+        return new ServiceBResponse(
+                response.body(),
+                returnedCorrelationId,
+                returnedJwt
+        );
+    }
+
+    private HttpResponse<String> executeRequest(HttpRequest request) {
 
         return retryService.execute(() -> {
 
@@ -64,7 +109,7 @@ public class ServiceBClient {
                     );
                 }
 
-                return response.body();
+                return response;
 
             } catch (IOException exception) {
 
@@ -85,19 +130,12 @@ public class ServiceBClient {
         });
     }
 
-    public ServiceBResponse sendXmlWithResponse(
-            String xml,
-            String correlationId) {
-
-        return sendXmlWithResponse(xml, correlationId, null);
-    }
-
-    public ServiceBResponse sendXmlWithResponse(
+    private HttpRequest buildRequest(
             String xml,
             String correlationId,
             String jwt) {
 
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(getXmlEndpoint()))
                 .timeout(Duration.ofMillis(requestTimeoutMs))
                 .header("Content-Type", "application/xml")
@@ -105,67 +143,12 @@ public class ServiceBClient {
                 .POST(HttpRequest.BodyPublishers.ofString(xml));
 
         if (jwt != null && !jwt.isBlank()) {
-            requestBuilder.header(
+            builder.header(
                     "Authorization",
                     "Bearer " + jwt
             );
         }
 
-        HttpRequest request = requestBuilder.build();
-
-        return retryService.execute(() -> {
-
-            try {
-                HttpResponse<String> response = httpClient.send(
-                        request,
-                        HttpResponse.BodyHandlers.ofString()
-                );
-
-                if (response.statusCode() >= 500) {
-                    throw new RetryableServiceBException(
-                            "Service B returned HTTP "
-                                    + response.statusCode()
-                    );
-                }
-
-                String returnedCorrelationId = response.headers()
-                        .firstValue("X-Correlation-ID")
-                        .orElse(null);
-
-                String authorizationHeader = response.headers()
-                        .firstValue("Authorization")
-                        .orElse(null);
-
-                String returnedJwt = null;
-
-                if (authorizationHeader != null
-                        && authorizationHeader.startsWith("Bearer ")) {
-
-                    returnedJwt = authorizationHeader.substring(7);
-                }
-
-                return new ServiceBResponse(
-                        response.body(),
-                        returnedCorrelationId,
-                        returnedJwt
-                );
-
-            } catch (IOException exception) {
-
-                throw new RetryableServiceBException(
-                        "Failed to communicate with Service B",
-                        exception
-                );
-
-            } catch (InterruptedException exception) {
-
-                Thread.currentThread().interrupt();
-
-                throw new RuntimeException(
-                        "Communication with Service B was interrupted",
-                        exception
-                );
-            }
-        });
+        return builder.build();
     }
 }

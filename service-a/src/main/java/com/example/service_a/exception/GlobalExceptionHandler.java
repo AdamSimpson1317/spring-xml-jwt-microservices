@@ -15,7 +15,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MessageMarshallingException.class)
     public ResponseEntity<String> handleMessageMarshallingException(MessageMarshallingException exception){
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
     }
 
     @ExceptionHandler(MalformedXmlException.class)
@@ -23,6 +23,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
     }
 
+    @ExceptionHandler(RetryExhaustedException.class)
+    public ResponseEntity<String> handleRetryExhaustedException(RetryExhaustedException exception) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(exception.getMessage());
+    }
 
+    @ExceptionHandler(ServiceBClientException.class)
+    public ResponseEntity<String> handleServiceBClientException(ServiceBClientException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(exception.getMessage());
+    }
 
 }
