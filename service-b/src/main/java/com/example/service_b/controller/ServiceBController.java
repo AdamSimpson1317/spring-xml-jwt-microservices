@@ -3,10 +3,12 @@ package com.example.service_b.controller;
 import com.example.service_b.model.Message;
 import com.example.service_b.service.XmlMarshallingService;
 import com.example.service_b.service.XmlUnmarshallingService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 public class ServiceBController {
@@ -31,6 +33,9 @@ public class ServiceBController {
     )
     public ResponseEntity<String> receiveXml(
             @RequestBody String xml, @RequestHeader("X-Correlation-ID") String correlationId){
+
+        log.info("Processing XML message");
+
         Message message = xmlUnmarshallingService.unmarshal(xml);
 
         message.setContent("Processed: " + message.getContent());

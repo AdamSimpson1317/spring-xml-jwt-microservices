@@ -4,6 +4,9 @@ import com.example.service_a.client.ServiceBClient;
 import com.example.service_a.model.Message;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class MessageService {
 
@@ -21,10 +24,22 @@ public class MessageService {
     }
 
     public Message sendMessage(Message message){
-        String requestXml = marshallingService.marshal(message);
         String correlationId = correlationIdService.generate();
-        String responseXml =
-                serviceBClient.sendXml(requestXml, correlationId);
-        return unmarshallingService.unmarshal(responseXml);
+
+        correlationIdService.addToMdc(correlationId);
+
+        try{
+            log.info("Sending message to Service B");
+
+            String requestXml = marshallingService.marshal(message);
+            String responseXml =
+                    serviceBClient.sendXml(requestXml, correlationId);
+
+            log.info("Received response from Service B");
+
+            return unmarshallingService.unmarshal(responseXml);
+        } finally {
+            correlationIdService.clearFromMdc();
+        }
     }
 }

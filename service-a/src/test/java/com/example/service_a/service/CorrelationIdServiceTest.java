@@ -1,9 +1,9 @@
 package com.example.service_a.service;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CorrelationIdServiceTest {
 
@@ -16,5 +16,20 @@ class CorrelationIdServiceTest {
 
         assertNotNull(correlationId);
         assertFalse(correlationId.isBlank());
+    }
+
+    @Test
+    void shouldAddGeneratedCorrelationIdToMdc() {
+
+        CorrelationIdService service = new CorrelationIdService();
+
+        String correlationId = service.generate();
+
+        service.addToMdc(correlationId);
+
+        assertEquals(
+                correlationId,
+                MDC.get("correlationId")
+        );
     }
 }
