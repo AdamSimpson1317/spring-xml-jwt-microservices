@@ -28,11 +28,11 @@ public class ServiceBController {
 
     @PostMapping(
             value = "/xml",
-            consumes = "application/xml",
-            produces = "application/xml"
+            consumes = MediaType.APPLICATION_XML_VALUE,
+            produces = MediaType.APPLICATION_XML_VALUE
     )
     public ResponseEntity<String> receiveXml(
-            @RequestBody String xml, @RequestHeader("X-Correlation-ID") String correlationId){
+            @RequestBody String xml, @RequestHeader("X-Correlation-Id") String correlationId){
 
         log.info("Processing XML message");
 

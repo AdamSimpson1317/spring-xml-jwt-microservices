@@ -20,6 +20,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MessageMarshallingException.class)
     public ResponseEntity<String> handleMessageMarshallingException(MessageMarshallingException exception){
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
     }
 }

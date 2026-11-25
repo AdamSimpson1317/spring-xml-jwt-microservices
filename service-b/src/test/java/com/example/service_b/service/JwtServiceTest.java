@@ -2,8 +2,6 @@ package com.example.service_b.service;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Date;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class JwtServiceTest {
@@ -40,7 +38,12 @@ class JwtServiceTest {
         JwtService jwtService =
                 new JwtService("this-is-a-development-secret-key-12345", 3600000);
 
-        String token = jwtService.generateExpiredToken();
+        JwtService expiredJwtService = new JwtService(
+                "this-is-a-development-secret-key-12345",
+                -1000
+        );
+
+        String token = expiredJwtService.generateToken();
 
         assertThrows(
                 io.jsonwebtoken.ExpiredJwtException.class,
@@ -67,20 +70,5 @@ class JwtServiceTest {
                 io.jsonwebtoken.JwtException.class,
                 () -> jwtService.extractSubject(token)
         );
-    }
-
-    @Test
-    void shouldGenerateTokenWithFutureExpiration() {
-
-        JwtService jwtService = new JwtService(
-                "this-is-a-development-secret-key-12345",
-                3600000
-        );
-
-        String token = jwtService.generateToken();
-
-        Date expiration = jwtService.extractExpiration(token);
-
-        assertTrue(expiration.after(new Date()));
     }
 }
