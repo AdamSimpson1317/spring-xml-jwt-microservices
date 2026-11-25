@@ -11,14 +11,11 @@ import java.time.Duration;
 public class HttpClientConfig {
 
     private final long connectTimeoutMs;
-    private final long requestTimeoutMs;
 
     public HttpClientConfig(
-            @Value("${service-b.http.connect-timeout-ms}") long connectTimeoutMs,
-            @Value("${service-b.http.request-timeout-ms}") long requestTimeoutMs) {
+            @Value("${service-b.http.connect-timeout-ms}") long connectTimeoutMs) {
 
         this.connectTimeoutMs = connectTimeoutMs;
-        this.requestTimeoutMs = requestTimeoutMs;
     }
 
     @Bean
@@ -32,7 +29,4 @@ public class HttpClientConfig {
         return connectTimeoutMs;
     }
 
-    public long getRequestTimeoutMs() {
-        return requestTimeoutMs;
-    }
 }

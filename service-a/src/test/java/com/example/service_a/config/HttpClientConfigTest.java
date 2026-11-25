@@ -10,9 +10,8 @@ public class HttpClientConfigTest {
     void shouldStoreHttpTimeoutConfiguration() {
 
         HttpClientConfig config =
-                new HttpClientConfig(2000, 5000);
+                new HttpClientConfig(2000);
 
         assertEquals(2000, config.getConnectTimeoutMs());
-        assertEquals(5000, config.getRequestTimeoutMs());
     }
 }

@@ -413,7 +413,7 @@ public class ServiceBClientRetryTest {
                     new RetryService(new RetryConfig(3, 0));
 
             HttpClientConfig httpClientConfig =
-                    new HttpClientConfig(1000, 50);
+                    new HttpClientConfig(1000);
 
             ServiceBClient client = new ServiceBClient(
                     "http://localhost:" + port,
