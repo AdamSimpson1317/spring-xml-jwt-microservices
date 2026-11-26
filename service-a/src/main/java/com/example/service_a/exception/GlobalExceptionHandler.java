@@ -1,5 +1,6 @@
 package com.example.service_a.exception;
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,4 +34,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(exception.getMessage());
     }
 
+    @ExceptionHandler(CallNotPermittedException.class)
+    public ResponseEntity<String> handleCallNotPermittedException(
+            CallNotPermittedException exception) {
+
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Service B is temporarily unavailable");
+    }
 }
