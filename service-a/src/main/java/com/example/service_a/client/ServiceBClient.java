@@ -6,6 +6,8 @@ import com.example.service_a.service.RetryService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -34,10 +36,10 @@ public class ServiceBClient {
         return serviceBUrl + "/api/xml";
     }
 
+    @CircuitBreaker(name = "serviceB")
     public String sendXml(String xml, String correlationId) {
 
         HttpRequest request = buildRequest(xml, correlationId, null);
-
 
         return executeRequest(request).body();
     }
